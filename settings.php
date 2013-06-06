@@ -6,11 +6,14 @@ return array(
         APP_ROOT . '/mdl',
     ),
     'error_log' => array(
-        APP_ROOT . '/logs/error/',
+        APP_ROOT . '/logs/error/php.log',
     ),
-    '\Ham' => array(
+    '\HamRouter' => array(
         'default' => array(
             'name' => 'default',
+        ),
+        'test' => array(
+            'name' => 'test',
         ),
     ),
     '\KFileLogger' => array(
@@ -23,6 +26,17 @@ return array(
             'directory' => APP_ROOT . '/logs/test/',
         ),
     ),
+    '\Pram\Templater' => array(
+        'default' => array(
+            'template_dir' => APP_ROOT . '/tpl/',
+            'cache_dir' => APP_ROOT . '/tmp/',
+            'globals' => array(
+                'site_title' => '阿债的技术博客',
+                'site_url' => '',
+                'static_url' => '/static',
+            ),
+        ),
+    ),    
     '\PDO' => array(
         'default' => array(
             'dsn' => 'mysql:host=localhost;dbname=db_account',
@@ -38,6 +52,16 @@ return array(
         ),
     ),
     '\Pram\Collection' => array(
+        'article' => array(
+            '#db' => '\Pram\Database',
+            'table' => 'posts',
+            'model' => 'Article',
+        ),
+        'comment' => array(
+            '#db' => '\Pram\Database',
+            'table' => 'comments',
+            'model' => 'Comment',
+        ),
         'user' => array(
             '#db' => '\Pram\Database',
             'table' => 'users',

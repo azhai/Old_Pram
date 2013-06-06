@@ -6,14 +6,17 @@
  * @author Ryan Liu <azhai@126.com>
  */
 
+namespace Pram;
 require __DIR__ . '/Requests/library/Requests.php';
+use \Requests as Requests;
+use \Requests_Auth_Basic as Requests_Auth_Basic;
 Requests::register_autoloader();
 
 
 /**
  * HTTP客户端，用于发送REST请求
  */
-class HttpClient
+class HTTPClient
 {
     public $uri_prefix = '';
     public $options = array();

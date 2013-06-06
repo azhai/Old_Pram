@@ -316,6 +316,11 @@ class Collection
 
     public function &get($id)
     {
+        if (empty($this->objects)) {
+            $model_class = $this->model_class;
+            $pkey_field = $model_class::getPKeyField();
+            $this->load(array($pkey_field => $id));
+        }
         if (array_key_exists($id, $this->objects)) {
             $obj = $this->objects[$id];
             return $obj;
@@ -425,6 +430,28 @@ class Model
     public function getChanges()
     {
         return $this->changes;
+    }
+    
+    public function __get($field)
+    {
+        $method = 'get' . str_replace('_', '', $field);
+        if (method_exists($this, $method)) {
+            return $this->$method();
+        }
+        else {
+            return $this->get($field);
+        }
+    }
+
+    public function __set($field, $value)
+    {
+        $method = 'set' . str_replace('_', '', $field);
+        if (method_exists($this, $method)) {
+            return $this->$method($value);
+        }
+        else {
+            return $this->set($field, $value);
+        }
     }
 
     //将对象转化为数组格式

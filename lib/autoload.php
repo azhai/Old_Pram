@@ -21,10 +21,17 @@ defined('DEFAULT_TIMEZONE') or define('DEFAULT_TIMEZONE', 'Asia/Shanghai');
  */
 class Register
 {
-    public static $autoload_classes = array( //加载类目录
-        'Pram\Database' =>  'db.php',
-        'Pram\Collection' => 'db.php',
-        'Pram\SQLiteral' => 'db.php',
+    public static $autoload_classes = array( //加载类列表
+        'HamRouter' =>  'router.php',
+        'Pram\Database' =>  'database.php',
+        'Pram\Collection' => 'database.php',
+        'Pram\SQLiteral' => 'database.php',
+        'Pram\Templater' =>  'templater.php',
+        'Pram\HTTPClient' =>  'httpclient.php',
+        'KLogger' =>  'logger.php',
+        'KFileLogger' =>  'logger.php',
+        'KHTTPLogger' =>  'logger.php',
+        'KPDOLogger' =>  'logger.php',
     );
     protected static $instances = array(); //实例
     protected static $settings = array(); //配置
@@ -39,25 +46,31 @@ class Register
     }
 
     //初始化
-    public static function init($envname='default')
+    public static function createApp($envname='default', $router='\HamRouter')
     {
         if (! isset(self::$instances[$envname])) { //创建实例
             $current_class = get_called_class();
             $env = new $current_class($envname);
             self::$instances[$envname] = $env;
         }
-        return self::$instances[$envname];
+        $instance = self::$instances[$envname];
+        if ($error_log = $instance->getSettings('error_log')) {
+            @error_log($error_log); //错误日志
+        }
+        $app = is_string($router) ? $instance->get($router) : $router;
+        $app->register = $instance;
+        return $app;
     }
 
     //自动加载
     public static function autoload($class)
     {
         if (array_key_exists($class, self::$autoload_classes)) {
-            require_once PRAM_ROOT . '/' . self::$autoload_classes[$class];
+            require_once __DIR__ . '/' . self::$autoload_classes[$class];
             return true;
         }
         foreach (self::$search_pathes as $search_path) {
-            $php_file = rtrim($search_path, '/') . '/' . $class . '.php';
+            $php_file = rtrim($search_path, '/') . '/' . strtolower($class) . '.php';
             if (file_exists($php_file)) {
                 require_once $php_file;
                 if (class_exists($class, false)) {
@@ -99,7 +112,8 @@ class Register
     {
         if (! $this->settings_parsed) {
             if (empty(self::$settings)) { //加载配置
-                self::$settings = (include SETTINGS_FILE);
+                $settings = (include SETTINGS_FILE);
+                self::$settings = ($settings === false) ? array() : $settings;
                 if (isset(self::$settings['search_pathes'])) {
                     self::$search_pathes += self::$settings['search_pathes'];
                 }

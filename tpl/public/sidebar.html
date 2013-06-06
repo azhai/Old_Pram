@@ -1,0 +1,57 @@
+
+<aside id="search-2" class="widget widget_search">
+    <form role="search" method="get" id="searchform" action="<?php echo $site_url ?>" >
+    <div>
+        <label class="screen-reader-text" for="s">搜索：</label>
+        <input type="text" value="" name="s" id="s" />
+        <input type="submit" id="searchsubmit" value="搜索" />
+    </div>
+    </form>
+</aside>     
+    
+<aside id="recent-posts-2" class="widget widget_recent_entries">        
+    <h3 class="widget-title">近期文章</h3>      
+    <ul>
+        <?php foreach ($recent_articles as $article) { ?>
+        <li><a href="<?php echo $site_url ?>/article/<?php echo $article->ID ?>/" title="<?php echo $article->post_title ?>"><?php echo $article->post_title ?></a></li>
+        <?php } ?>
+    </ul>
+</aside>
+        
+<aside id="recent-comments-2" class="widget widget_recent_comments">
+    <h3 class="widget-title">近期评论</h3>
+    <ul id="recentcomments">
+        <?php foreach ($recent_comments as $comment) { ?>
+        <li class="recentcomments"><?php echo $comment->comment_author ?> 发表在《<a href="<?php echo $site_url ?>?p=<?php echo $comment->comment_post_ID ?>#comment-<?php echo $comment->comment_ID ?>"><?php echo $comment->post->post_title ?></a>》</li>
+        <?php } ?>
+    </ul>
+</aside>
+        
+<aside id="archives-2" class="widget widget_archive">
+    <h3 class="widget-title">文章归档</h3>    
+    <ul>
+        <?php foreach ($archives as $archive) { ?>
+        <li><a href="<?php echo $site_url ?>?m=<?php echo $archive->post_date->format('Ym') ?>" title="<?php echo $archive->post_date->format('Y年n月') ?>"><?php echo $archive->post_date->format('Y年n月') ?></a></li>
+        <?php } ?>
+    </ul>
+</aside>
+
+<aside id="categories-2" class="widget widget_categories">
+    <h3 class="widget-title">分类目录</h3>        
+    <ul>
+        <?php foreach ($categories as $category) { ?>
+        <li class="cat-item cat-item-<?php echo $category->term_id ?>"><a href="<?php echo $site_url ?>/category/<?php echo $category->term_id ?>/" title="<?php echo $category->term->slug ?>"><?php echo $category->term->name ?></a>
+        <?php } ?>
+    </li>
+    </ul>
+</aside>
+
+<aside id="meta-2" class="widget widget_meta">
+    <h3 class="widget-title">功能</h3>          
+    <ul>
+        <li><a href="<?php echo $site_url ?>wp-login.php">登录</a></li>
+        <li><a href="<?php echo $site_url ?>?feed=rss2" title="使用 RSS 2.0 订阅本站点内容">文章 <abbr title="Really Simple Syndication">RSS</abbr></a></li>
+        <li><a href="<?php echo $site_url ?>?feed=comments-rss2" title="使用 RSS 订阅本站点的所有文章的近期评论">评论 <abbr title="Really Simple Syndication">RSS</abbr></a></li>
+        <li><a href="http://cn.wordpress.org/" title="基于 WordPress，一个优美、先进的个人信息发布平台。">WordPress.org</a></li>
+    </ul>
+</aside>
