@@ -5,7 +5,7 @@
  * @copyright 2013 FreeBSD License
  * @author Ryan Liu <azhai@126.com>
  */
- 
+
 namespace Pram;
 use \PDO as PDO;
 
@@ -19,7 +19,7 @@ defined('DEFAULT_TIMEZONE') or define('DEFAULT_TIMEZONE', 'Asia/Shanghai');
  * 全局注册表
  * 用于自动加载类文件，根据配置生成类对象
  */
-class Register
+class Registry
 {
     public static $autoload_classes = array( //加载类列表
         'HamRouter' =>  'router.php',
@@ -39,7 +39,7 @@ class Register
     protected $services = array(); //服务
     protected $envname = '';
     protected $settings_parsed = false;
-    
+
     protected function __construct($envname)
     {
         $this->envname = $envname;
@@ -58,7 +58,7 @@ class Register
             @error_log($error_log); //错误日志
         }
         $app = is_string($router) ? $instance->get($router) : $router;
-        $app->register = $instance;
+        $app->registry = $instance;
         return $app;
     }
 

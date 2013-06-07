@@ -28,7 +28,7 @@
 <link rel='stylesheet' id='twentytwelve-ie-css'  href='<?php echo $static_url ?>/css/ie.css?ver=20121010' type='text/css' media='all' />
 <![endif]-->
 <link rel="EditURI" type="application/rsd+xml" title="RSD" href="<?php echo $site_url ?>/xmlrpc.php?rsd" />
-<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="<?php echo $site_url ?>/wp-includes/wlwmanifest.xml" /> 
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="<?php echo $site_url ?>/wp-includes/wlwmanifest.xml" />
 <meta name="generator" content="WordPress 3.5" />
     <style type="text/css">.recentcomments a{display:inline !important;padding:0 !important;margin:0 !important;}</style>
 </head>
@@ -61,8 +61,8 @@
             </div>
             <!-- #content -->
         </div><!-- #primary -->
-    	<div id="secondary" class="widget-area" role="complementary">
-<?php echo $sidebar ?>
+        <div id="secondary" class="widget-area" role="complementary">
+<?php $this->include_tpl('public/sidebar.html'); ?>
         </div><!-- #secondary -->
     </div><!-- #main .wrapper -->
 

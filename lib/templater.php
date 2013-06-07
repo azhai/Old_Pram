@@ -29,9 +29,8 @@ class Templater
         $this->globals = $globals;
     }
 
-    public function render($template_file, array $context=array())
+    public function partial($template_file, array $context=array())
     {
-        $context = array_merge($this->globals, $context);
         extract($context);
         ob_start();
         include $this->template_dir . DS . $template_file; //入口模板
@@ -46,11 +45,19 @@ class Templater
         return ob_get_clean();
     }
 
+    public function render($template_file, array $context=array())
+    {
+        $context = array_merge($this->globals, $context);
+        return $this->partial($template_file, $context);
+    }
+
+
     /* 注意: 必须自己传递context，如果想共享render中的context，请在模板中
-       使用 include $this->template_dir . DS . $template_file; 
+       使用 include $this->template_dir . DS . $template_file;
        代替 $this->include_tpl($template_file); */
     public function include_tpl($template_file, array $context=array())
     {
+        extract($this->globals);
         extract($context);
         include $this->template_dir . DS . $template_file;
     }

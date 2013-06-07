@@ -2,9 +2,9 @@
 defined('APP_URI') or define('APP_URI', '');
 
 
-class HamRouter 
+class HamRouter
 {
-    public $register;
+    public $registry;
     public $routes;
     public $name;
     public $cache;
@@ -17,7 +17,7 @@ class HamRouter
      * @param mixed $cache
      * @param bool $log
      */
-    public function __construct($name='default', $cache=False) 
+    public function __construct($name='default', $cache=False)
     {
         $this->name = $name;
         if($cache === False) {
@@ -33,7 +33,7 @@ class HamRouter
      * @param array $request_methods
      * @return bool
      */
-    public function route($uri, $callback, $request_methods=array('GET')) 
+    public function route($uri, $callback, $request_methods=array('GET'))
     {
         if($this === $callback) {
             return False;
@@ -57,7 +57,7 @@ class HamRouter
     /**
      * Calls route and outputs it to STDOUT
      */
-    public function run() 
+    public function run()
     {
         echo $this();
     }
@@ -67,7 +67,7 @@ class HamRouter
      * @param mixed|bool $app parent application that can be referenced by $app->parent
      * @return mixed|string
      */
-    public function __invoke($app=False) 
+    public function __invoke($app=False)
     {
         $this->parent = $app;
         return $this->_route($_SERVER['REQUEST_URI']);
@@ -77,7 +77,7 @@ class HamRouter
      * Makes sure the routes are compiled then scans through them
      * and calls whichever one is approprate.
      */
-    protected function _route($request_uri) 
+    protected function _route($request_uri)
     {
         $uri = parse_url(str_replace(APP_URI, '', $request_uri));
         $path = $uri['path'];
@@ -95,7 +95,7 @@ class HamRouter
     }
 
 
-    protected function _find_route($path) 
+    protected function _find_route($path)
     {
         $compiled = $this->_get_compiled_routes();
         foreach($compiled as $route) {
@@ -110,7 +110,7 @@ class HamRouter
         return False;
     }
 
-    protected function _get_compiled_routes() 
+    protected function _get_compiled_routes()
     {
         $_k = 'compiled_routes';
         $compiled = $this->cache->get($_k);
@@ -129,7 +129,7 @@ class HamRouter
     /**
      * Takes a route in simple syntax and makes it into a regular expression.
      */
-    protected function _compile_route($uri, $wildcard) 
+    protected function _compile_route($uri, $wildcard)
     {
         $route = $this->_escape_route_uri(rtrim($uri, '/'));
         $types = array(
@@ -149,7 +149,7 @@ class HamRouter
         return  $ret;
     }
 
-    protected function _escape_route_uri($uri) 
+    protected function _escape_route_uri($uri)
     {
         return str_replace('/', '\/', preg_quote($uri));
     }
@@ -160,7 +160,7 @@ class HamRouter
      * @param string $message
      * @return string
      */
-    public static function abort($code, $message='') 
+    public static function abort($code, $message='')
     {
         if(php_sapi_name() != 'cli')
             header("Status: {$code}", False, $code);
@@ -170,7 +170,7 @@ class HamRouter
     /**
      * Cache factory, be it XCache or APC.
      */
-    public static function create_cache($prefix, $dummy=False) 
+    public static function create_cache($prefix, $dummy=False)
     {
         return new Dummy($prefix);
     }

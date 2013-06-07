@@ -31,12 +31,11 @@ return array(
             'template_dir' => APP_ROOT . '/tpl/',
             'cache_dir' => APP_ROOT . '/tmp/',
             'globals' => array(
-                'site_title' => '阿债的技术博客',
                 'site_url' => '',
                 'static_url' => '/static',
             ),
         ),
-    ),    
+    ),
     '\PDO' => array(
         'default' => array(
             'dsn' => 'mysql:host=localhost;dbname=db_account',

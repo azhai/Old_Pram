@@ -14,19 +14,22 @@ require APP_ROOT . '/lib/autoload.php';
 require APP_ROOT . '/web/misc.php';
 $envname = 'test';
 
-$app = \Pram\Register::createApp($envname);
+$app = \Pram\Registry::createApp($envname);
 require __DIR__ . '/' . $envname . '.php';
-$app->logger = $app->register->get('\KFileLogger');
-$app->db = $app->register->get('\Pram\Database');
-$app->templater = $app->register->get('\Pram\Templater');
+$app->logger = $app->registry->get('\KFileLogger');
+$app->db = $app->registry->get('\Pram\Database');
+$app->templater = $app->registry->get('\Pram\Templater');
 
 /*博客配置项*/
 $app->templater->globals['options'] = $app->db->doSelect(
     'wp_options', 'WHERE option_name in (?, ?, ?, ?)',
     array('siteurl', 'blogname', 'blogdescription', 'posts_per_page'),
-    'option_name, option_value', 
+    'option_name, option_value',
     PDO::FETCH_COLUMN | PDO::FETCH_GROUP | PDO::FETCH_UNIQUE
 );
+$app->templater->globals['site_title'] = $app->templater->globals['options']['blogname'];
+$app->templater->globals['site_description'] = $app->templater->globals['options']['blogdescription'];
+
 /*最近文章*/
 $article_conds = array('post_type'=>'post', 'post_status'=>'publish');
 $coll = new \Pram\Collection($app->db, 'posts');
