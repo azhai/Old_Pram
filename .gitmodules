@@ -1,0 +1,9 @@
+[submodule "lib/Requests"]
+	path = lib/Requests
+	url = git@github.com:rmccue/Requests.git
+[submodule "lib/ApnsPHP"]
+	path = lib/ApnsPHP
+	url = git@github.com:duccio/ApnsPHP.git
+[submodule "lib/SwiftMailer"]
+	path = lib/SwiftMailer
+	url = git@github.com:swiftmailer/swiftmailer.git
