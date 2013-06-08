@@ -968,7 +968,7 @@ footer.entry-meta {
 	color: #757575;
 }
 .single-author .entry-meta .by-author {
-	display: none;
+	/*display: none;*/
 }
 .mu_register h2 {
 	color: #757575;

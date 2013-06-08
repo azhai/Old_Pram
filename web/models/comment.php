@@ -6,8 +6,6 @@
  * @author Ryan Liu <azhai@126.com>
  */
 
-use \Pram\Model;
-
 
 final class CommentMeta extends Model
 {

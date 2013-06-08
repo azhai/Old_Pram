@@ -1,5 +1,6 @@
 <?php
 
+
 /*只显示分页符之前的文章内容*/
 function less_content($content, $article_id){
     if ( preg_match('/<!--more(.*?)?-->/', $content, $matches) ) {

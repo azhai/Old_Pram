@@ -6,42 +6,60 @@
  * @author Ryan Liu <azhai@126.com>
  */
 
-defined('APP_ROOT') or define('APP_ROOT', dirname(__DIR__));
-defined('SETTINGS_FILE') or define('SETTINGS_FILE', APP_ROOT . '/settings.php');
+defined('WEB_ROOT') or define('WEB_ROOT', dirname(__FILE__));
+defined('APP_ROOT') or define('APP_ROOT', dirname(WEB_ROOT));
 
 
-require APP_ROOT . '/lib/autoload.php';
-require APP_ROOT . '/web/misc.php';
-$envname = 'test';
+require APP_ROOT . '/library/application.php';
+$app = app()->setEnvname('test');
 
-$app = \Pram\Registry::createApp($envname);
-require __DIR__ . '/' . $envname . '.php';
-$app->logger = $app->registry->get('\KFileLogger');
-$app->db = $app->registry->get('\Pram\Database');
-$app->templater = $app->registry->get('\Pram\Templater');
+require WEB_ROOT . '/models/user.php';
+require WEB_ROOT . '/misc.php';
+
+
+/*路由配置*/
+route('/', 'home_page', 'home');
+route('/<int>/', 'home_page', 'home');
+route('/article/<int>/', 'article_show', null, array('GET'));
+
 
 /*博客配置项*/
-$app->templater->globals['options'] = $app->db->doSelect(
-    'wp_options', 'WHERE option_name in (?, ?, ?, ?)',
-    array('siteurl', 'blogname', 'blogdescription', 'posts_per_page'),
-    'option_name, option_value',
-    PDO::FETCH_COLUMN | PDO::FETCH_GROUP | PDO::FETCH_UNIQUE
-);
-$app->templater->globals['site_title'] = $app->templater->globals['options']['blogname'];
-$app->templater->globals['site_description'] = $app->templater->globals['options']['blogdescription'];
+function get_options()
+{
+    $db = app()->db;
+    $options = $db->doSelect(
+        'wp_options', 'WHERE option_name in (?, ?, ?, ?)',
+        array('siteurl', 'blogname', 'blogdescription', 'posts_per_page'),
+        'option_name, option_value',
+        PDO::FETCH_COLUMN | PDO::FETCH_GROUP | PDO::FETCH_UNIQUE
+    );
+    return array(
+        'site_title' => $options['blogname'],
+        'site_description' => $options['blogdescription'],
+    );
+}
 
-/*最近文章*/
-$article_conds = array('post_type'=>'post', 'post_status'=>'publish');
-$coll = new \Pram\Collection($app->db, 'posts');
-$app->templater->globals['recent_articles'] = $coll->load($article_conds, 'ORDER BY post_date DESC LIMIT 5');
-/*最近评论*/
-$coll = new \Pram\Collection($app->db, 'comments', 'Comment');
-$app->templater->globals['recent_comments'] = $coll->load(array('comment_type'=>''), 'ORDER BY comment_date DESC LIMIT 5');
-/*文章归档*/
-$coll = new \Pram\Collection($app->db, 'posts');
-$app->templater->globals['archives'] = $coll->load($article_conds, 'GROUP BY YEAR(post_date), MONTH(post_date) DESC LIMIT 5');
-/*文章分类*/
-$coll = new \Pram\Collection($app->db, 'term_taxonomy', 'TermTaxonomy');
-$app->templater->globals['categories'] = $coll->load(array('taxonomy'=>'category'));
 
-$app->run();
+/*侧边栏*/
+function get_sidebar()
+{
+    $db = app()->db;
+    $sidebar = array();
+    $article_conds = array('post_type'=>'post', 'post_status'=>'publish');
+    /*最近文章*/
+    $coll = new Collection($db, 'posts');
+    $sidebar['recent_articles'] = $coll->load($article_conds, 'ORDER BY post_date DESC LIMIT 5');
+    /*最近评论*/
+    $coll = new Collection($db, 'comments', 'Comment');
+    $sidebar['recent_comments'] = $coll->load(array('comment_type'=>''), 'ORDER BY comment_date DESC LIMIT 5');
+    /*文章归档*/
+    $coll = new Collection($db, 'posts');
+    $sidebar['archives'] = $coll->load($article_conds, 'GROUP BY YEAR(post_date), MONTH(post_date) DESC LIMIT 5');
+    /*文章分类*/
+    $coll = new Collection($db, 'term_taxonomy', 'TermTaxonomy');
+    $sidebar['categories'] = $coll->load(array('taxonomy'=>'category'));
+    return $sidebar;
+}
+
+$app->templater->globals = array_merge($app->templater->globals, get_options(), get_sidebar());
+run($app);

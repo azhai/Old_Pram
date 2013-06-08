@@ -12,6 +12,7 @@ require __DIR__ . '/moonphase.php';
 
 /**
  * 获得立春的日期
+ * 根据网上快速计算公式，只有最近三个世纪
  */
 function get_spring_day($year)
 {   
@@ -19,7 +20,7 @@ function get_spring_day($year)
     $year = intval($year);
     $century = strval(ceil($year / 100));
     $figures = $year % 100;
-    $fix = array_key_exists($century, $fixes) ? $fixes[$century] : 4; 
+    $fix = array_key_exists($century, $fixes) ? $fixes[$century] : 4;
     return floor($figures * 0.2422 + $fix) - floor(($figures - 1) / 4);
 }
 
@@ -59,6 +60,8 @@ function get_horoscope_index($month_day)
 
 /**
  * 从农历转为公历，leap闰月
+ * 根据月相猜测的，天数是对的，月份常常会早了一个月
+ * 原理很简单，农历每月初一都是月相中新月第一天
  */
 function from_lunar($dt, $leap=false)
 {

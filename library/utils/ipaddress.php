@@ -22,7 +22,7 @@ function binary_search($total, $callback)
     do {
         $step = ceil($step / 2);
         $offset += $sign * $step;
-        array_splice($args, 0, 1, $offset);
+        $args[0] = $offset;
         $sign = call_user_func_array($callback, $args);
     } while ($sign !== 0 && $step > 1);
     return $sign === 0;
@@ -47,7 +47,7 @@ function compare_ip($offset, $ip, $fp)
 /**
  * 是否中国大陆IP
  */
-function is_china_ip($ip_address)
+function ip_in_china($ip_address)
 {
     //IP段数据文件，每个IP表示成一个8位hex整数，不足8位的前面补0
     $datfile = DATA_DIR . '/cnips.dat';
@@ -96,24 +96,23 @@ function ip_in_list($ip_address)
 function is_block_ip($ip_address, $money=0, $money_xx=0) 
 {
     try {
-        $foreign_currency = intval($money) !== intval($money_xx); //境外货币
-    }
-    catch (Exception $e) {
-        $foreign_currency = true;
-    }
-    if ($foreign_currency === false) { //人民币，不用判断IP了
-        return false;
-    }
-    
-    try {
-        //禁止的IP
-        $black_ip = ip_in_list($ip_address);
-        if ($black_ip === 0) {
-            $black_ip = is_china_ip($ip_address);
+        if (intval($money) === intval($money_xx)) {
+            return false; //人民币，不用判断IP了
         }
     }
     catch (Exception $e) {
-        $black_ip = false;
     }
-    return $foreign_currency && ($black_ip === true || $black_ip === -1);
+    
+    //境外货币    
+    try {
+        //禁止的IP
+        $special_ip = ip_in_list($ip_address);
+        if ($special_ip === 0) { //不是特殊IP，再看是否在境内
+            $china_ip = ip_in_china($ip_address);
+        }
+        return $special_ip === -1 || $china_ip === true;
+    }
+    catch (Exception $e) {
+        return false; //获取不到IP或未知IP
+    }
 }

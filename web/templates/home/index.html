@@ -1,0 +1,62 @@
+<?php 
+$this->extend_tpl('public/base.html'); 
+$this->block_start('content');
+?>
+
+<?php foreach ($articles as $article) { ?>
+<article id="post-<?php echo $article->ID ?>" class="post-<?php echo $article->ID ?> post type-post status-publish format-standard hentry category-design tag-css tag-font-size tag-83">
+    <header class="entry-header">
+        <h1 class="entry-title">
+            <a href="/article/<?php echo $article->ID ?>/" title="链向 <?php echo $article->post_title ?> 的固定链接" rel="bookmark"><?php echo $article->post_title ?></a>
+        </h1>
+        <?php if ($article->comment_count > 0) { ?>
+        <div class="comments-link">
+            <a href="/article/<?php echo $article->ID ?>/#comments" title="《<?php echo $article->post_title ?>》上的评论"><?php echo $article->comment_count ?> 条回复</a>
+        </div><!-- .comments-link -->
+        <?php } ?>
+    </header><!-- .entry-header -->
+
+    <div class="entry-content">
+        <p>
+<?php echo less_content($article->post_content, $article->ID) ?>
+        </p>
+    </div><!-- .entry-content -->
+    
+    <footer class="entry-meta">
+        本条目发布于 <a href="<?php echo $site_url ?>?p=<?php echo $article->ID ?>" title="<?php echo $article->post_date->format('H:i') ?>" rel="bookmark"><time class="entry-date" datetime="<?php echo $article->post_date->format('Y-m-d\\TH:i:sP') ?>"><?php echo $article->post_date->format('Y-m-d') ?></time></a>。
+        属于
+        <?php foreach ($article->categories as $i => $category) { ?>
+        <?php if ($i > 0) echo '、' ?>
+        <a href="<?php echo $site_url ?>?cat=<?php echo $category->term_id ?>" title="查看 <?php echo $category->name ?> 中的全部文章" rel="category"><?php echo $category->name ?></a>
+        <?php } ?>
+        分类
+        <?php if ($article->tags) { ?>
+            ，被贴了
+            <?php foreach ($article->tags as $i => $tag) { ?>
+            <?php if ($i > 0) echo '、' ?>
+            <a href="<?php echo $site_url ?>?tag=<?php echo $tag->slug ?>" rel="tag"><?php echo $tag->name ?></a>
+            <?php } ?>
+            标签
+        <?php } ?>。
+        <span class="by-author">作者是 <span class="author vcard"><a class="url fn n" href="<?php echo $site_url ?>?author=<?php echo $article->post_author ?>" title="查看所有由 <?php echo $article->author->display_name ?> 发布的文章" rel="author"><?php echo $article->author->display_name ?></a></span>。</span>
+    </footer><!-- .entry-meta -->
+</article><!-- #post -->
+<?php } ?>
+            
+<nav id="nav-below" class="navigation" role="navigation">
+    <h3 class="assistive-text">文章导航</h3>
+    <div class="nav-previous alignleft">
+        <?php if ($next_page) { ?>
+        <a href="<?php echo $site_url ?>/<?php echo $page + 1 ?>/" ><span class="meta-nav">&larr;</span> 早期文章</a>
+        <?php } ?>
+    </div>
+    <div class="nav-next alignright">
+        <?php if ($page > 1) { ?>
+        <a href="<?php echo $site_url ?>/<?php echo $page - 1 ?>/" >较晚文章 <span class="meta-nav">&rarr;</span></a>
+        <?php } ?>
+    </div>
+</nav><!-- #nav-below .navigation -->
+
+<?php
+$this->block_end();
+?>

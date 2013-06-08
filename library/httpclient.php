@@ -6,10 +6,7 @@
  * @author Ryan Liu <azhai@126.com>
  */
 
-namespace Pram;
-require __DIR__ . '/Requests/library/Requests.php';
-use \Requests as Requests;
-use \Requests_Auth_Basic as Requests_Auth_Basic;
+require dirname(__FILE__) . '/Requests/library/Requests.php';
 Requests::register_autoloader();
 
 

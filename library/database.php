@@ -6,10 +6,6 @@
  * @author Ryan Liu <azhai@126.com>
  */
 
-namespace Pram;
-use \PDO as PDO;
-use \PDOException as PDOException;
-
 
 /**
  * 字面量参数，值不会被脱敏，更新类操作中使用
@@ -362,9 +358,9 @@ class Collection
         }
         $this->db->doReplace($this->getTableName(), $rows);
         #$this->load();
-        echo "<br />\n<br />\n";
+        /*echo "<br />\n<br />\n";
         var_dump($this->objects);
-        echo "<br />\n<br />\n";
+        echo "<br />\n<br />\n";*/
         return true;
     }
 }
@@ -376,8 +372,8 @@ class Collection
 class Model
 {
     const PKEY_FIELD = 'id';
-    protected $changes = array(); //改动数据、脏数据
     public static $fields = array();
+    protected $changes = array(); //改动数据、脏数据
     public $id = 0;
     
     public function __construct()
@@ -398,8 +394,9 @@ class Model
     public static function getPKeyField()
     {
         return static::PKEY_FIELD;
-        $curr_class = get_called_class();
-        return $curr_class::PKEY_FIELD;
+        return strtolower(static::PKEY_FIELD);
+        //$curr_class = get_called_class();
+        //return $curr_class::PKEY_FIELD;
     }
     
     public function isDirty()

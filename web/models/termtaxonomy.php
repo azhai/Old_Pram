@@ -6,8 +6,6 @@
  * @author Ryan Liu <azhai@126.com>
  */
 
-use \Pram\Model;
-
 
 /**
  * 类别、标签
@@ -21,5 +19,12 @@ final class Term extends Model
 final class TermTaxonomy extends Model
 {
     const PKEY_FIELD = 'term_taxonomy_id';
+    
+    public function getTerm()
+    {
+        $coll = new Collection(app()->db, 'terms', 'Term');
+        $term = $coll->get($this->term_id);
+        return empty($term) ? new Term(): $term;
+    }
 }
 

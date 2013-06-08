@@ -6,7 +6,14 @@
  * @author Ryan Liu <azhai@126.com>
  */
 
-use \Pram\Model;
+
+class UserCollection extends Collection
+{
+    //当前用户
+    public function current()
+    {
+    }
+}
 
 
 final class UserMeta extends Model
@@ -33,7 +40,7 @@ final class User extends Model
     
     public function getUserRegistered()
     {
-        return date_create($this->user_registered : '2000-01-01');
+        return date_create($this->user_registered ? $this->user_registered : '2000-01-01');
     }
 }
 
