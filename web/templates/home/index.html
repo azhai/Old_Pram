@@ -27,14 +27,14 @@ $this->block_start('content');
         属于
         <?php foreach ($article->categories as $i => $category) { ?>
         <?php if ($i > 0) echo '、' ?>
-        <a href="<?php echo $site_url ?>?cat=<?php echo $category->term_id ?>" title="查看 <?php echo $category->name ?> 中的全部文章" rel="category"><?php echo $category->name ?></a>
+        <a href="<?php echo $site_url ?>?cat=<?php echo $category->term_id ?>" title="查看 <?php echo $category->term->name ?> 中的全部文章" rel="category"><?php echo $category->term->name ?></a>
         <?php } ?>
         分类
         <?php if ($article->tags) { ?>
             ，被贴了
             <?php foreach ($article->tags as $i => $tag) { ?>
             <?php if ($i > 0) echo '、' ?>
-            <a href="<?php echo $site_url ?>?tag=<?php echo $tag->slug ?>" rel="tag"><?php echo $tag->name ?></a>
+            <a href="<?php echo $site_url ?>?tag=<?php echo $tag->term->slug ?>" rel="tag"><?php echo $tag->term->name ?></a>
             <?php } ?>
             标签
         <?php } ?>。

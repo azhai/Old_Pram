@@ -9,6 +9,9 @@ return array(
     ),
     'router' => 'HamRouter',
     'logger' => array('KFileLogger', false, APP_ROOT . '/logs/'),
+    'dblogger' => array('KFileLogger', false, APP_ROOT . '/logs/', array(
+        'headname' => 'dblog_', 'extname' => '.log',
+    )),
     'templater' => array(
         'Templater',
         WEB_ROOT . '/templates/',
@@ -56,16 +59,23 @@ return array(
         'table' => 'comments',
         'model' => 'Comment',
     ),
+    'users' => array(
+        'class' => 'UserCollection',
+        '#db' => '',
+        'table' => 'users',
+        'model' => 'User',
+    ),
     'taxonomies' => array(
         'class' => 'Collection',
         '#db' => '',
         'table' => 'term_taxonomy',
         'model' => 'TermTaxonomy',
     ),
-    'users' => array(
-        'class' => 'UserCollection',
+    'categories' => array(
+        'class' => 'Collection',
         '#db' => '',
-        'table' => 'users',
-        'model' => 'User',
+        'table' => 'term_taxonomy',
+        'model' => 'TermTaxonomy',
+        'phrases' => array('taxonomy'=>'category'),
     ),
 );

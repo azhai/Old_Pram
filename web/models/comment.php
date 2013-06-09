@@ -18,6 +18,6 @@ final class CommentMeta extends Model
  */
 final class Comment extends Model
 {
-    const PKEY_FIELD = 'comment_id';
+    const PKEY_FIELD = 'comment_ID';
 }
 

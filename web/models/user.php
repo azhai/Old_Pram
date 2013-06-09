@@ -27,6 +27,7 @@ final class UserMeta extends Model
  */
 final class User extends Model
 {
+    const PKEY_FIELD = 'ID';
     private $user_registered = null;
     private $user_status = 0;
     

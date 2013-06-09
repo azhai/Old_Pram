@@ -6,6 +6,7 @@
  * @author Ryan Liu <azhai@126.com>
  */
 
+defined('DEBUG_MODE') or define('DEBUG_MODE', false);
 defined('WEB_URI') or define('WEB_URI', '');
 defined('APP_ROOT') or define('APP_ROOT', dirname(dirname(__FILE__)));
 defined('DS') or define('DS', DIRECTORY_SEPARATOR);
@@ -121,7 +122,8 @@ class Procedure
 class Application
 {
     public static $autoload_classes = array( //加载类列表
-        'HamRouter' =>  'router.php',
+        'Listener' =>  'event.php',
+        'Observer' =>  'event.php',
         'Database' =>  'database.php',
         'Collection' => 'database.php',
         'SQLiteral' => 'database.php',
@@ -323,7 +325,7 @@ class HamRouter
                     $inner_url = substr($url, strlen($handler->prefix));
                     return $handler->find($inner_url);
                 }
-                array_shift($args); //丢掉第一个元素，完整匹配的URL
+                $args[0] = app(); //丢掉第一个元素，完整匹配的URL
                 return array($handler, $args);
             }
         }

@@ -38,6 +38,7 @@ class Database
 
     public function __construct(PDO $conn, $table_prefix='')
     {
+        $this->uuid = DEBUG_MODE ? uniqid('db', true) : '-';
         $this->conn = $conn;
         $this->table_prefix = $table_prefix;
     }
@@ -76,6 +77,9 @@ class Database
             $params[$i] = $this->quote($param);
         }
         $sql = vsprintf($sql, $params);
+        if ($logger = app()->dblogger) { //记录SQL到日志
+            $logger->info($sql . ';', array('ipv4'=>$this->uuid));
+        }
         $this->conn->exec($sql);
         return $this;
     }
@@ -105,7 +109,9 @@ class Database
         if ($this->stmt) { //关闭上一次的游标
             $this->stmt->closeCursor();
         }
-        //echo $sql . "; <br />\n";
+        if ($logger = app()->dblogger) { //记录SQL到日志
+            $logger->info(vsprintf(str_replace("?", "'%s'", $sql), $params) . ';', array('ipv4'=>$this->uuid));
+        }
         $this->stmt = $this->conn->prepare($sql);
         $this->stmt->execute($params);
         return $this->stmt;
@@ -205,11 +211,12 @@ class Collection
     protected $objects = array(); //ID对应对象
     protected $phrases = array(); //限制条件
 
-    public function __construct($db, $table_name='', $model_class='')
+    public function __construct($db, $table_name='', $model_class='', array $phrases=array())
     {
         $this->db = $db;
         $this->table_name = $table_name;
         $this->model_class = $model_class;
+        $this->phrases = $phrases;
     }
 
     //获取当前真实数据表名，包含前缀
@@ -238,17 +245,18 @@ class Collection
     {
         $ops = array();
         $params = array();
-        $holder = $quote ? "'%s'" : "?";
+        $holder = $quote ? "'%s'" : "?";        
         foreach ($this->phrases as $key => $value) {
             //预处理key和数组value
             $key = trim($key);
             if (is_array($value)) {
+                $value = array_unique($value); //去重复
                 $count = count($value);
-                if ($count == 0) {
+                if ($count === 0) {
                     $value = null;
                 }
-                else if ($count == 1) {
-                    $value = $value[0];
+                else if ($count === 1) {
+                    $value = array_pop($value);
                 }
                 else {
                     $holder_list = substr(str_repeat(", " . $holder, $count), 2);
@@ -323,6 +331,11 @@ class Collection
             return $obj;
         }
     }
+    
+    public function with($foreiner)
+    {
+        return $foreiner->wrap($this);
+    }
 
     public function load(array $phrases=null, $extra='')
     {
@@ -339,10 +352,10 @@ class Collection
         else {
             $fetch = array('fetchAll', PDO::FETCH_CLASS | PDO::FETCH_UNIQUE, $this->model_class);
             $model_class = $this->model_class;
-            $model_class::$fields = $this->getFields();
+            //$model_class::$fields = $this->getFields();
             $pkey_field = $model_class::getPKeyField();
         }
-        $columns = "$table_name.`$pkey_field`, $table_name.*";
+        $columns = "`$table_name`.`$pkey_field`, `$table_name`.*";
         $this->objects = $this->db->doSelect($table_name, $where, $params, $columns, $fetch);
         $this->phrases = array($pkey_field => array_keys($this->objects)); //简化查询条件
         return $this->objects;
@@ -375,9 +388,10 @@ class Model
     const PKEY_FIELD = 'id';
     public static $fields = array();
     protected $changes = array(); //改动数据、脏数据
+    public $foreigns = array(); //外部数据
     public $id = 0;
 
-    public function __construct()
+    /*public function __construct()
     {
         $args = func_get_args();
         $pkey_field = static::getPKeyField();
@@ -390,12 +404,11 @@ class Model
                 $this->$field = $arg;
             }
         }
-    }
+    }*/
 
     public static function getPKeyField()
     {
         return static::PKEY_FIELD;
-        return strtolower(static::PKEY_FIELD);
         //$curr_class = get_called_class();
         //return $curr_class::PKEY_FIELD;
     }
@@ -411,6 +424,9 @@ class Model
         if ($field === $pkey_field) {
             return $this->id;
         }
+        else if (array_key_exists($field, $this->foreigns)) {
+            return $this->foreigns[$field];
+        }
         else if (array_key_exists($field, $this->changes)) {
             return $this->changes[$field]; //先在修改部分查找
         }
@@ -421,7 +437,12 @@ class Model
 
     public function set($field, $value)
     {
-        $this->changes[$field] = $value;
+        if (array_key_exists($field, $this->foreigns)) {
+            $this->foreigns[$field] = $value;
+        }
+        else {
+            $this->changes[$field] = $value;
+        }
         return $this;
     }
 
@@ -446,6 +467,15 @@ class Model
         $method = 'set' . str_replace('_', '', $field);
         if (method_exists($this, $method)) {
             return $this->$method($value);
+        }
+        else if (empty($this->id)) { //初始化数据
+            $pkey_field = static::getPKeyField();
+            if ($field === $pkey_field) {
+                $this->id = $value;
+            }
+            else {
+                $this->$field = $value;
+            }
         }
         else {
             return $this->set($field, $value);

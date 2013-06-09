@@ -43,7 +43,8 @@ function get_options()
 /*侧边栏*/
 function get_sidebar()
 {
-    $db = app()->db;
+    $app = app();
+    $db = $app->db;
     $sidebar = array();
     $article_conds = array('post_type'=>'post', 'post_status'=>'publish');
     /*最近文章*/
@@ -57,7 +58,7 @@ function get_sidebar()
     $sidebar['archives'] = $coll->load($article_conds, 'GROUP BY YEAR(post_date), MONTH(post_date) DESC LIMIT 5');
     /*文章分类*/
     $coll = new Collection($db, 'term_taxonomy', 'TermTaxonomy');
-    $sidebar['categories'] = $coll->load(array('taxonomy'=>'category'));
+    $sidebar['categories'] = $app->categories->load();
     return $sidebar;
 }
 

@@ -6,18 +6,21 @@
  * @author Ryan Liu <azhai@126.com>
  */
 
+require_once WEB_ROOT . '/models/article.php';
+require_once WEB_ROOT . '/models/termtaxonomy.php';
+
 
 /**
  * 首页，最近博客列表
  */
-function home_page($page=1)
+function home_page($app, $page=1)
 {
     $page_length = 10;
     $offset = (intval($page) - 1) * $page_length;
     $length = $page_length + 1;
     
-    $app = app();
-    $articles = $app->articles->load(
+    $listener = new ArticleListener('author', 'categories', 'tags');
+    $articles = $app->articles->with($listener)->load(
         array('post_type'=>'post', 'post_status'=>'publish'),
         "ORDER BY post_date DESC LIMIT $offset,$length"
     );
