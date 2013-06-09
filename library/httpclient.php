@@ -18,19 +18,19 @@ class HTTPClient
     public $uri_prefix = '';
     public $options = array();
     public $response = null;
-    
+
     public function __construct($uri_prefix='')
     {
         $this->uri_prefix = rtrim($uri_prefix, '/');
     }
-    
+
     //设置Basic Auth
     public function setBasicAuth($username, $password)
     {
         $this->options['auth'] = new Requests_Auth_Basic(array($username, $password));
         return $this;
     }
-    
+
     //GET、DELETE、HEAD请求
     protected function _sendGetRequest($method, $url, $data=array(), $headers=array())
     {
@@ -48,7 +48,7 @@ class HTTPClient
         }
         return $this->response;
     }
-    
+
     //POST、PUT、PATCH请求
     protected function _sendPostRequest($method, $url, $data=array(), $headers=array())
     {
@@ -64,7 +64,7 @@ class HTTPClient
         }
         return $this->response;
     }
-    
+
     //发送Request
     public function __call($method, $params)
     {
@@ -91,14 +91,14 @@ class HTTPClient
         }
         return $this;
     }
-    
+
     public function postRaw($url, $data, $headers=array())
     {
         $data = is_string($data) ? $data : json_encode($data);
         $headers = empty($headers) ? array('Content-Type'=>'application/json') : array();
         return $this->post($url, $data, $headers);
     }
-    
+
     public function isSuccess()
     {
         return $this->response && $this->response->success;
@@ -126,4 +126,3 @@ class HTTPClient
         }
     }
 }
-?>

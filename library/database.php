@@ -41,7 +41,7 @@ class Database
         $this->conn = $conn;
         $this->table_prefix = $table_prefix;
     }
-    
+
     public function quote($param)
     {
         if ($param instanceof SQLiteral) { //字面量，直接使用
@@ -105,6 +105,7 @@ class Database
         if ($this->stmt) { //关闭上一次的游标
             $this->stmt->closeCursor();
         }
+        //echo $sql . "; <br />\n";
         $this->stmt = $this->conn->prepare($sql);
         $this->stmt->execute($params);
         return $this->stmt;
@@ -121,7 +122,7 @@ class Database
         }
         return $this->execute($sql, $params)->commit();
     }
-    
+
     //批量UPDATE操作
     public function doUpdate($table_name, array $data, $where="", array $params=array())
     {
@@ -138,7 +139,7 @@ class Database
         $rows = func_get_args();
         assert(count($rows) >= 2);
         $table_name = array_shift($rows);
-        
+
         foreach ($rows as $row) {
             if (! empty($row) && is_array($row)) {
                 $sql = "INSERT INTO `" . $table_name . "`";
@@ -161,7 +162,7 @@ class Database
     }
 
     //SELECT操作，根据最后两个参数分解结果
-    public function doSelect($table_name, $where="", array $params=array(), 
+    public function doSelect($table_name, $where="", array $params=array(),
                                 $columns='*', $fetch='fetchAll')
     {
         $sql = "SELECT " . $columns . " FROM `" . $table_name . "`";
@@ -203,14 +204,14 @@ class Collection
     protected $fields = array(); //字段和默认值
     protected $objects = array(); //ID对应对象
     protected $phrases = array(); //限制条件
-    
+
     public function __construct($db, $table_name='', $model_class='')
     {
         $this->db = $db;
         $this->table_name = $table_name;
         $this->model_class = $model_class;
     }
-    
+
     //获取当前真实数据表名，包含前缀
     public function getTableName()
     {
@@ -231,7 +232,7 @@ class Collection
         }
         return $this->fields;
     }
-    
+
     //解析条件部分
     public function parsePhrases($quote=true)
     {
@@ -347,7 +348,7 @@ class Collection
         return $this->objects;
     }
 
-    public function sync()  
+    public function sync()
     {
         $rows = array();
         foreach ($this->objects as $obj) {
@@ -375,7 +376,7 @@ class Model
     public static $fields = array();
     protected $changes = array(); //改动数据、脏数据
     public $id = 0;
-    
+
     public function __construct()
     {
         $args = func_get_args();
@@ -390,7 +391,7 @@ class Model
             }
         }
     }
-    
+
     public static function getPKeyField()
     {
         return static::PKEY_FIELD;
@@ -398,7 +399,7 @@ class Model
         //$curr_class = get_called_class();
         //return $curr_class::PKEY_FIELD;
     }
-    
+
     public function isDirty()
     {
         return ! empty($this->changes);
@@ -428,7 +429,7 @@ class Model
     {
         return $this->changes;
     }
-    
+
     public function __get($field)
     {
         $method = 'get' . str_replace('_', '', $field);
@@ -460,12 +461,12 @@ class Model
         unset($data['changes']);
         return $data;
     }
-    
+
     //保存前操作
     public function beforeSave()
     {
     }
-    
+
     //保存后操作
     public function afterSave()
     {

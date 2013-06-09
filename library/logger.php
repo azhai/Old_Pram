@@ -59,7 +59,7 @@ abstract class KLogger
      * are often the values the developers will test for. So we'll make one up.
      */
     const NO_ARGUMENTS = 'KLogger::NO_ARGUMENTS';
-    
+
     /**
      * Current minimum logging threshold
      * @var integer
@@ -91,7 +91,7 @@ abstract class KLogger
      * @var array
      */
     private $backends                    = array();
-    
+
 
     /**
      * Partially implements the Singleton pattern. Each $logDirectory gets one
@@ -101,13 +101,13 @@ abstract class KLogger
      * @param integer $severity     One of the pre-defined severity constants
      * @return KLogger
      */
-    public static function instance($logClass = 'KFileLogger', $severity = false, 
+    public static function instance($logClass = 'KFileLogger', $severity = false,
                                       $logStorage = false, array $options=array())
-    {        
+    {
         if ($severity === false) {
             $severity = self::$_defaultSeverity;
         }
-        
+
         if ($logClass === 'KFileLogger') {
             if ($logStorage === false) {
                 if (count(self::$instances) > 0) {
@@ -118,14 +118,14 @@ abstract class KLogger
             }
             $logStorage = rtrim($logStorage, '\\/');
         }
-        
+
         $uniqueKey = $logClass . $logStorage;
         if (! in_array($uniqueKey, self::$instances)) {
             self::$instances[$uniqueKey] = new $logClass($severity, $logStorage, $options);
         }
         return self::$instances[$uniqueKey];
     }
-    
+
     public function addBackend(KLogger $backend)
     {
         if ($backend->severityThreshold < $this->severityThreshold) {
@@ -133,12 +133,12 @@ abstract class KLogger
         }
         $this->backends[] = $backend;
     }
-    
+
     public static function setRecordClientIP($recordClientIP)
     {
         self::$_recordClientIP = $recordClientIP;
     }
-    
+
     /**
      * Writes a $line to the log with a severity level of DEBUG
      *
@@ -152,7 +152,7 @@ abstract class KLogger
 
     /**
      * Sets the date format used by all instances of KLogger
-     * 
+     *
      * @param string $dateFormat Valid format string for date()
      */
     public static function setDateFormat($dateFormat)
@@ -186,7 +186,7 @@ abstract class KLogger
 
     /**
      * Writes a $line to the log with a severity level of WARN. Generally
-     * corresponds to E_WARNING, E_USER_WARNING, E_CORE_WARNING, or 
+     * corresponds to E_WARNING, E_USER_WARNING, E_CORE_WARNING, or
      * E_COMPILE_WARNING
      *
      * @param string $line Information to log
@@ -266,7 +266,7 @@ abstract class KLogger
         if ($this->severityThreshold >= $severity) {
             $time = null;
             $ipv4 = null;
-            if($args !== self::NO_ARGUMENTS) { //Get time and ipv4 if args is a array 
+            if($args !== self::NO_ARGUMENTS) { //Get time and ipv4 if args is a array
                 if (is_array($args)) {
                     if (isset($args['time'])) {
                         $time = $args['time'];
@@ -278,9 +278,9 @@ abstract class KLogger
                     }
                     $args = empty($args) ? self::NO_ARGUMENTS : $args;
                 }
-                
+
             }
-            
+
             $time = empty($time) ? self::_getTime() : $time;
             $ipv4 = empty($ipv4) ? self::_getIPv4() : $ipv4;
             $this->logTo($severity, $line, $args, $time, $ipv4);
@@ -291,7 +291,7 @@ abstract class KLogger
             }
         }
     }
-    
+
     public function fromHttp()
     {
         $severity = isset($_POST['severity']) ? $_POST['severity'] : self::DEBUG;
@@ -305,16 +305,16 @@ abstract class KLogger
         $args['ipv4'] = isset($_POST['ipv4']) ? $_POST['ipv4'] : '-';
         $this->log($line, $severity, $args);
     }
-    
+
     abstract function logTo($severity, $line, $args, $time, $ipv4);
-    
+
     public function __call($method, $args)
     {
         if (method_exists($this, 'log' . $method)) {
             return call_user_func_array(array($this, 'log' . $method), $args);
         }
     }
-    
+
     public static function getClientRealIP()
     {
         if (isset($_SERVER['HTTP_CLIENT_IP'])) {
@@ -421,7 +421,7 @@ class KFileLogger extends KLogger
         $this->severityThreshold = $severity;
         $this->_logDirectory = $logDirectory;
     }
-    
+
     public function openlogFile($tailname='')
     {
         $logDirectory = rtrim($this->_logDirectory, '\\/');
@@ -517,7 +517,7 @@ class KFileLogger extends KLogger
         }
         if($args !== self::NO_ARGUMENTS) { /* Print the passed object value */
             $line = $line . '; ' . var_export($args, true);
-        } 
+        }
         $level = self::_getLevelName($severity);
         $status = sprintf("%s %s %s -->", $time, $ipv4, $level);
         $this->writeFreeFormLine("$status $line" . PHP_EOL);
@@ -533,14 +533,14 @@ class KHTTPLogger extends KLogger
 {
     private $_httpURL = '';
     private $_options = array();
-    
+
     public function __construct($severity, $httpURL, array $options=array())
     {
         $this->severityThreshold = $severity;
         $this->_httpURL = trim($httpURL);
         $this->_options = $options;
     }
-    
+
     public function logTo($severity, $line, $args, $time, $ipv4)
     {
         try {
@@ -555,7 +555,7 @@ class KHTTPLogger extends KLogger
             'time' => $time, 'ipv4' => $ipv4
         ));
     }
-    
+
     public function post(array $data)
     {
         if (isset($this->_options['client'])) {
@@ -583,7 +583,7 @@ class KPDOLogger extends KLogger
     private $_pdo = null;
     private $_dsn = null;
     private $_options = array('table'=>'logs');
-    
+
     public function __construct($severity, $dsn, array $options=array())
     {
         $this->severityThreshold = $severity;
@@ -591,7 +591,7 @@ class KPDOLogger extends KLogger
         $this->_options = array_merge($this->_options, $options);
         $this->createTable();
     }
-    
+
     public function logTo($severity, $line, $args, $time, $ipv4)
     {
         if($args !== self::NO_ARGUMENTS) { /* Print the passed object value */
@@ -603,7 +603,7 @@ class KPDOLogger extends KLogger
         $stmt->execute(array($level, $time, $ipv4, $line, $args));
         return true;
     }
-    
+
     public function connect($db_type='')
     {
         if (is_null($this->_pdo)) {
@@ -624,40 +624,38 @@ class KPDOLogger extends KLogger
         }
         return $this->_pdo;
     }
-    
+
     public function createTable()
     {
         $table_name = $this->_options['table'];
         $sql_mysql = <<<EOD
 CREATE TABLE IF NOT EXISTS `$table_name` (
-`id`  int(10) UNSIGNED NOT NULL AUTO_INCREMENT ,
-`level`  varchar(10) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' ,
-`time`  datetime NULL DEFAULT NULL ,
-`ipv4`  varchar(15) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL ,
-`message`  tinytext CHARACTER SET utf8 COLLATE utf8_general_ci NULL ,
-`extra`  text CHARACTER SET utf8 COLLATE utf8_general_ci NULL ,
-PRIMARY KEY (`id`),
-INDEX `time` (`time`) USING BTREE ,
-INDEX `ipv4` (`ipv4`) USING BTREE 
+    `id`  int(10) UNSIGNED NOT NULL AUTO_INCREMENT ,
+    `level`  varchar(10) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '' ,
+    `time`  datetime NULL DEFAULT NULL ,
+    `ipv4`  varchar(15) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL ,
+    `message`  tinytext CHARACTER SET utf8 COLLATE utf8_general_ci NULL ,
+    `extra`  text CHARACTER SET utf8 COLLATE utf8_general_ci NULL ,
+    PRIMARY KEY (`id`),
+    INDEX `time` (`time`) USING BTREE ,
+    INDEX `ipv4` (`ipv4`) USING BTREE
 )
 ENGINE=InnoDB
 DEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci
 AUTO_INCREMENT=1
-ROW_FORMAT=COMPACT
-;
+ROW_FORMAT=COMPACT;
 EOD
 ;
         $sql_sqlite = <<<EOD
 CREATE TABLE "main"."$table_name" (
-"id"  INTEGER NOT NULL,
-"level"  TEXT(10) NOT NULL,
-"time"  TEXT,
-"ipv4"  TEXT(15),
-"message"  TEXT,
-"extra"  TEXT,
-PRIMARY KEY ("id" ASC)
-)
-;
+    "id"  INTEGER NOT NULL,
+    "level"  TEXT(10) NOT NULL,
+    "time"  TEXT,
+    "ipv4"  TEXT(15),
+    "message"  TEXT,
+    "extra"  TEXT,
+    PRIMARY KEY ("id" ASC)
+);
 EOD
 ;
         $db_type = strtolower(substr($this->_dsn, 0, 5));

@@ -82,6 +82,16 @@ class Procedure
         $this->args = $args;
     }
 
+    public static function exec($func, array $args=null)
+    {
+        if (empty($args)) { //保留函数默认值
+            return call_user_func($func);
+        }
+        else {
+            return call_user_func_array($func, $args);
+        }
+    }
+
     /*执行过程得到结果*/
     public function invoke()
     {
@@ -99,7 +109,7 @@ class Procedure
             $func = array($this->subject, $this->method);
         }
         $args = array_merge($this->args, func_get_args());
-        return call_user_func_array($func, $args);
+        return self::exec($func, $args);
     }
 }
 
@@ -231,7 +241,7 @@ class Application
         }
         return $this->services[$name];
     }
-    
+
     /*找到URL对应函数或对象获得输出*/
     public function handleRouter()
     {
@@ -246,7 +256,7 @@ class Application
         }
         return $this->response;
     }
-    
+
     public function abort($code, $message='')
     {
         if(php_sapi_name() != 'cli') {
@@ -260,7 +270,7 @@ class Application
 
 /**
  * URL路由器
- * 简化自James Cleveland的Ham 
+ * 简化自James Cleveland的Ham
  */
 class HamRouter
 {
@@ -272,7 +282,7 @@ class HamRouter
     );
     protected $routes = array();
     protected $prefix = '';
-    
+
     public function add($uri, $callback, $module=null, array $methods=null)
     {
         $module = is_null($module) ? strtok($uri, '/') : $module;
@@ -282,7 +292,7 @@ class HamRouter
         }
         $this->compile($uri, $callback, $module, $methods);
     }
-    
+
     public function compile($uri, $callback, $module, array $methods=array())
     {
         $keys = array_map('preg_quote', array_keys(self::$route_types));
@@ -292,7 +302,7 @@ class HamRouter
         if ($callback instanceof self) {
             $callback->prefix = $uri;
             $wildcard = '(.*)?';
-        }        
+        }
         else if ($callback instanceof Handler) {
             $callback->module = $module;
         }
@@ -304,7 +314,7 @@ class HamRouter
         $this->routes[$route_key] = $callback;
         return $route_key;
     }
-    
+
     public function find($url)
     {
         foreach ($this->routes as $route_key => $handler) {
@@ -329,7 +339,7 @@ class Handler
 {
     public $module = '';
     public $callbacks = array();
-    
+
     public static function create($callback, array $methods=array())
     {
         $obj = new self();
@@ -340,7 +350,7 @@ class Handler
         }
         return $obj;
     }
-    
+
     public function emit($method='GET', array $args=array())
     {
         if (method_exists($this, $method)) { //PHP方法名不区分大小写
@@ -354,12 +364,7 @@ class Handler
             }
         }
         if (is_callable($callback)) {
-            if (count($args) === 0) { //保留函数默认值
-                return call_user_func($callback);
-            }
-            else {
-                return call_user_func_array($callback, $args);
-            }
+            return Procedure::exec($callback, $args);
         }
     }
 }
