@@ -9,7 +9,7 @@ return array(
     ),
     'router' => 'HamRouter',
     'logger' => array('KFileLogger', false, APP_ROOT . '/logs/'),
-    'dblogger' => array('KFileLogger', false, APP_ROOT . '/logs/', array(
+    'dblogger' => array('KFileLogger', 3, APP_ROOT . '/logs/', array(
         'headname' => 'dblog_', 'extname' => '.log',
     )),
     'templater' => array(
@@ -24,18 +24,18 @@ return array(
     'pdo' => array(
         'default' => array(
             'class' => 'PDO',
-            'dsn' => 'mysql:host=localhost;dbname=db_account',
+            'dsn' => 'mysql:host=localhost;dbname=db_account;charset=utf8',
             'user' => 'dba',
             'password' => 'changeme',
             'options' => array(
-                PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES 'UTF8'", //指定字符编码utf8
+                #PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES 'UTF8'", //指定字符编码utf8
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, //错误模式改为抛出异常，而不是slient
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, 
             ),
         ),
         'test' => array(
             'class' => 'PDO',
-            'dsn' => 'mysql:host=localhost;dbname=db_wordpress'
+            'dsn' => 'mysql:host=localhost;dbname=db_wordpress;charset=utf8'
         ),
     ),
     'db' => array(

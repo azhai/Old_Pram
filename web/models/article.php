@@ -31,7 +31,7 @@ final class Article extends Model
     //保存前操作
     public function beforeSave()
     {
-        if (empty($this->ID)) {
+        if (empty($this->id)) {
             $this->post_date = $this->post_date_gmt = date('Y-m-d H:i:s');
         }
         else {
@@ -63,28 +63,40 @@ final class Article extends Model
         return $comments;
     }
     
-    public function getTaxonomies($type='')
+    public function getTaxonomies()
     {
         $app = app();
-        $term_taxonomy_ids = $app->db->doSelect(
-            'wp_term_relationships', 'WHERE object_id=? ORDER BY term_order', 
-            array($this->id), 'term_taxonomy_id', PDO::FETCH_COLUMN
+        $article_id = $this->id;
+        $subquery = "SELECT term_taxonomy_id FROM `wp_term_relationships`"
+                  . " WHERE object_id='$article_id'";
+        $taxonomies = $app->taxonomies->with(new TermListener())->load(
+            array(), "WHERE term_taxonomy_id IN ($subquery)"
         );
-        $type = empty($type) ? array('category', 'post_tag') : $type;
-        $taxonomies = $app->taxonomies->with(new TermListener())->load(array(
-            'term_taxonomy_id'=>$term_taxonomy_ids, 'taxonomy'=>$type,
-        ));
+        $categories = array();
+        $tags = array();
+        foreach ($taxonomies as $taxonomy) {
+            if ($taxonomy->taxonomy === 'category') {
+                array_push($categories, $taxonomy);
+            }
+            else {
+                array_push($tags, $taxonomy);
+            }
+        }
+        $this->categories = $categories;
+        $this->tags = $tags;
         return $taxonomies;
     }
     
     public function getCategories()
     {
-        return $this->getTaxonomies('category');
+        $this->getTaxonomies();
+        return $this->categories;
     }
     
     public function getTags()
     {
-        return $this->getTaxonomies('post_tag');
+        $this->getTaxonomies();
+        return $this->tags;
     }
 }
 
@@ -120,20 +132,38 @@ class ArticleListener extends Listener
                     array_push($comments[$comment->comment_post_ID], $comment);
                 }
             }
-            $article_id_list = implode(', ', array_unique($article_ids));
-            $subquery = "SELECT term_taxonomy_id FROM `wp_term_relationships` WHERE object_id IN ($article_id_list)";
-            $taxonomies = $app->taxonomies->with(new TermListener())->load(array(), "WHERE term_taxonomy_id IN ($subquery)");
+            if (in_array('categories', $this->names) || in_array('tags', $this->names)) {
+                //manyToMany
+                $coll = new Collection($app->db, 'term_relationships');
+                $relations = $coll->loadRelations(
+                    array('object_id'=>$article_ids), 
+                    'object_id', 'term_taxonomy_id'
+                );
+                $taxonomy_ids = array_reduce($relations, 'array_merge', array());
+                $taxonomies = $app->taxonomies->with(new TermListener())->load(
+                    array('term_taxonomy_id'=>$taxonomy_ids)
+                );
+            }
         }
         foreach ($articles as & $article) {
             if (isset($authors)) {
                 $article->author = $authors[$article->post_author];
             }
             if (isset($comments)) {
-                $article->comments = $comments[$article->ID];
+                $article->comments = $comments[$article->id];
             }
             if (isset($taxonomies)) {
                 $article->categories = array();
                 $article->tags = array();
+                foreach ($relations[$article->id] as $taxonomy_id) {
+                    $taxonomy = $taxonomies[$taxonomy_id];
+                    if ($taxonomy->taxonomy === 'category') {
+                        array_push($article->categories, $taxonomy);
+                    }
+                    else {
+                        array_push($article->tags, $taxonomy);
+                    }
+                }
             }
         }
         return $articles;

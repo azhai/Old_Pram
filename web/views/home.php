@@ -15,7 +15,7 @@ require_once WEB_ROOT . '/models/termtaxonomy.php';
  */
 function home_page($app, $page=1)
 {
-    $page_length = 10;
+    $page_length = $app->templater->globals['posts_per_page'];
     $offset = (intval($page) - 1) * $page_length;
     $length = $page_length + 1;
     

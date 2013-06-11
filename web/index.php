@@ -14,6 +14,7 @@ require APP_ROOT . '/library/application.php';
 $app = app()->setEnvname('test');
 
 require WEB_ROOT . '/models/user.php';
+require WEB_ROOT . '/models/comment.php';
 require WEB_ROOT . '/misc.php';
 
 
@@ -36,6 +37,7 @@ function get_options()
     return array(
         'site_title' => $options['blogname'],
         'site_description' => $options['blogdescription'],
+        'posts_per_page' => intval($options['posts_per_page']),
     );
 }
 
@@ -52,7 +54,7 @@ function get_sidebar()
     $sidebar['recent_articles'] = $coll->load($article_conds, 'ORDER BY post_date DESC LIMIT 5');
     /*最近评论*/
     $coll = new Collection($db, 'comments', 'Comment');
-    $sidebar['recent_comments'] = $coll->load(array('comment_type'=>''), 'ORDER BY comment_date DESC LIMIT 5');
+    $sidebar['recent_comments'] = $coll->with(new CommentListener())->load(array('comment_type'=>''), 'ORDER BY comment_date DESC LIMIT 5');
     /*文章归档*/
     $coll = new Collection($db, 'posts');
     $sidebar['archives'] = $coll->load($article_conds, 'GROUP BY YEAR(post_date), MONTH(post_date) DESC LIMIT 5');

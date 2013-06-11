@@ -12,7 +12,7 @@ require_once WEB_ROOT . '/models/termtaxonomy.php';
 
 function article_show($app, $id)
 {
-    $article = $app->articles->with(new TermListener())->get($id);
+    $article = $app->articles->get($id);
     return $app->templater->render('article/show.html', array(
         'article' => $article,
     ));

@@ -22,7 +22,7 @@
     <h3 class="widget-title">近期评论</h3>
     <ul id="recentcomments">
         <?php foreach ($recent_comments as $comment) { ?>
-        <li class="recentcomments"><?php echo $comment->comment_author ?> 发表在《<a href="<?php echo $site_url ?>?p=<?php echo $comment->comment_post_ID ?>#comment-<?php echo $comment->comment_ID ?>"><?php echo $comment->post->post_title ?></a>》</li>
+        <li class="recentcomments"><?php echo $comment->comment_author ?> 发表在《<a href="<?php echo $site_url ?>?p=<?php echo $comment->comment_post_ID ?>#comment-<?php echo $comment->comment_ID ?>"><?php echo $comment->article->post_title ?></a>》</li>
         <?php } ?>
     </ul>
 </aside>

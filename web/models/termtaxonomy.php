@@ -40,7 +40,7 @@ class TermListener extends Listener
         $term_ids = array_map($get_term_id, $taxonomies);
         if (count($term_ids) > 0) {
             $coll = new Collection(app()->db, 'terms', 'Term');
-            $coll->load(array(Term::PKEY_FIELD => $term_ids));
+            $terms = $coll->load(array(Term::PKEY_FIELD => $term_ids));
             foreach ($taxonomies as & $taxonomy) {
                 $taxonomy->term = $terms[$taxonomy->term_id];
             }

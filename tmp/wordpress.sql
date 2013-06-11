@@ -266,6 +266,17 @@ CREATE TABLE `wp_users` (
   KEY `user_login_key` (`user_login`),
   KEY `user_nicename` (`user_nicename`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Records of wp_options
+-- ----------------------------
+INSERT INTO `wp_options` VALUES ('1', 'siteurl', 'http://localhost', 'yes');
+INSERT INTO `wp_options` VALUES ('2', 'blogname', 'XXX的博客', 'yes');
+INSERT INTO `wp_options` VALUES ('3', 'blogdescription', '又一个 WordPress 站点', 'yes');
+INSERT INTO `wp_options` VALUES ('4', 'posts_per_page', '10', 'yes');
+INSERT INTO `wp_options` VALUES ('5', 'date_format', 'Y 年 n 月 j 日', 'yes');
+INSERT INTO `wp_options` VALUES ('6', 'time_format', 'a g:i', 'yes');
+
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

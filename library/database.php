@@ -308,8 +308,7 @@ class Collection
             $pkey_field = 'id';
         }
         else if ($obj instanceof $this->model_class) {
-            $model_class = $this->model_class;
-            $pkey_field = $model_class::getPKeyField();
+            $pkey_field = call_user_func(array($this->model_class, 'getPKeyField'));
         }
         //添加对象
         if (! empty($pkey_field)) { //满足条件
@@ -319,11 +318,14 @@ class Collection
         }
     }
 
-    public function &get($id)
+    public function &get($id, $pkey_field='')
     {
         if (empty($this->objects)) {
-            $model_class = $this->model_class;
-            $pkey_field = $model_class::getPKeyField();
+            if (empty($pkey_field)) {
+                $model_class = $this->model_class;
+                $obj = new $model_class();
+                $pkey_field = call_user_func(array($obj, 'getPKeyField'));
+            }
             $this->load(array($pkey_field => $id));
         }
         if (array_key_exists($id, $this->objects)) {
@@ -337,7 +339,7 @@ class Collection
         return $foreiner->wrap($this);
     }
 
-    public function load(array $phrases=null, $extra='')
+    public function load(array $phrases=null, $extra='', $pkey_field='')
     {
         if (! empty($phrases)) {
             $this->phrases = array_merge($this->phrases, $phrases);
@@ -345,19 +347,42 @@ class Collection
         list($clause, $params) = $this->parsePhrases(false);
         $where = $clause . " " . trim($extra);
         $table_name = $this->getTableName();
+        
         if (empty($this->model_class)) {
             $fetch = PDO::FETCH_OBJ | PDO::FETCH_UNIQUE;
-            $pkey_field = 'id';
+            if (empty($pkey_field)) {
+                $fields = $this->getFields();
+                $pkey_field = empty($fields) ? 'id' : key($fields);
+            }
         }
         else {
             $fetch = array('fetchAll', PDO::FETCH_CLASS | PDO::FETCH_UNIQUE, $this->model_class);
-            $model_class = $this->model_class;
-            //$model_class::$fields = $this->getFields();
-            $pkey_field = $model_class::getPKeyField();
+            if (empty($pkey_field)) {
+                $pkey_field = call_user_func(array($this->model_class, 'getPKeyField'));
+            }
         }
         $columns = "`$table_name`.`$pkey_field`, `$table_name`.*";
         $this->objects = $this->db->doSelect($table_name, $where, $params, $columns, $fetch);
         $this->phrases = array($pkey_field => array_keys($this->objects)); //简化查询条件
+        return $this->objects;
+    }
+
+    public function loadRelations(array $phrases=null, $key_field='', $value_field='')
+    {
+        if (! empty($phrases)) {
+            $this->phrases = array_merge($this->phrases, $phrases);
+        }
+        list($clause, $params) = $this->parsePhrases(false);
+        $where = $clause . " " . trim($extra);
+        $table_name = $this->getTableName();        
+        if (empty($key_field) && empty($value_field)) {
+            $columns = "*";
+        }
+        else {
+            $columns = "`$table_name`.`$key_field`, `$table_name`.$value_field";
+        }
+        $this->objects = $this->db->doSelect($table_name, $where, $params, 
+                $columns, PDO::FETCH_COLUMN | PDO::FETCH_GROUP);
         return $this->objects;
     }
 
@@ -386,31 +411,28 @@ class Collection
 class Model
 {
     const PKEY_FIELD = 'id';
-    public static $fields = array();
     protected $changes = array(); //改动数据、脏数据
     public $foreigns = array(); //外部数据
     public $id = 0;
 
-    /*public function __construct()
+    public function __construct()
     {
-        $args = func_get_args();
-        $pkey_field = static::getPKeyField();
-        foreach ($args as $i => $arg) {
-            $field = static::$fields[$i];
-            if ($field === $pkey_field) {
-                $this->id = $arg;
-            }
-            else {
-                $this->$field = $arg;
-            }
-        }
-    }*/
+    }
 
     public static function getPKeyField()
-    {
-        return static::PKEY_FIELD;
-        //$curr_class = get_called_class();
-        //return $curr_class::PKEY_FIELD;
+    { 
+        if (version_compare(PHP_VERSION, '5.3.0') >= 0) {
+            //Static bind need PHP 5.3
+            return static::PKEY_FIELD;
+        }
+        else {
+            try {
+                return self::PKEY_FIELD;
+            }
+            catch (Exception $e) {
+                return parent::PKEY_FIELD;
+            }
+        }
     }
 
     public function isDirty()
@@ -420,7 +442,7 @@ class Model
 
     public function get($field)
     {
-        $pkey_field = static::getPKeyField();
+        $pkey_field = $this->getPKeyField();
         if ($field === $pkey_field) {
             return $this->id;
         }
@@ -468,8 +490,11 @@ class Model
         if (method_exists($this, $method)) {
             return $this->$method($value);
         }
-        else if (empty($this->id)) { //初始化数据
-            $pkey_field = static::getPKeyField();
+        else if ($this->isDirty()) {
+            return $this->set($field, $value);
+        }
+        else { //初始化数据
+            $pkey_field = $this->getPKeyField();
             if ($field === $pkey_field) {
                 $this->id = $value;
             }
@@ -477,15 +502,12 @@ class Model
                 $this->$field = $value;
             }
         }
-        else {
-            return $this->set($field, $value);
-        }
     }
 
     //将对象转化为数组格式
     public function toArray()
     {
-        $pkey_field = static::getPKeyField();
+        $pkey_field = $this->getPKeyField();
         $data = get_object_vars($this);
         $data = array_merge($data, $this->changes);
         unset($data['changes']);
@@ -500,7 +522,7 @@ class Model
     //保存后操作
     public function afterSave()
     {
-        $pkey_field = static::getPKeyField();
+        $pkey_field = $this->getPKeyField();
         foreach ($this->changes as $field => $value) {
             if ($field === $pkey_field) {
                 $this->id = $value;
