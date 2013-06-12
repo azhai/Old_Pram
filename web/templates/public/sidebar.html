@@ -1,4 +1,6 @@
-
+<?php
+extract(get_sidebar());
+?>
 <aside id="search-2" class="widget widget_search">
     <form role="search" method="get" id="searchform" action="<?php echo $site_url ?>" >
     <div>
@@ -22,16 +24,16 @@
     <h3 class="widget-title">近期评论</h3>
     <ul id="recentcomments">
         <?php foreach ($recent_comments as $comment) { ?>
-        <li class="recentcomments"><?php echo $comment->comment_author ?> 发表在《<a href="<?php echo $site_url ?>?p=<?php echo $comment->comment_post_ID ?>#comment-<?php echo $comment->comment_ID ?>"><?php echo $comment->article->post_title ?></a>》</li>
+        <li class="recentcomments"><?php echo $comment->comment_author ?> 发表在《<a href="<?php echo $site_url ?>/article/<?php echo $comment->comment_post_ID ?>/#comment-<?php echo $comment->comment_ID ?>"><?php echo $comment->article->post_title ?></a>》</li>
         <?php } ?>
     </ul>
 </aside>
         
 <aside id="archives-2" class="widget widget_archive">
-    <h3 class="widget-title">文章归档</h3>    
+    <h3 class="widget-title">文章归档</h3>
     <ul>
         <?php foreach ($archives as $archive) { ?>
-        <li><a href="<?php echo $site_url ?>?m=<?php echo $archive->post_date->format('Ym') ?>" title="<?php echo $archive->post_date->format('Y年n月') ?>"><?php echo $archive->post_date->format('Y年n月') ?></a></li>
+        <li><a href="<?php echo $site_url ?>/archive/<?php echo $archive->post_date->format('Ym') ?>/" title="<?php echo $archive->post_date->format('Y年n月') ?>"><?php echo $archive->post_date->format('Y年n月') ?></a></li>
         <?php } ?>
     </ul>
 </aside>

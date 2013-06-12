@@ -15,12 +15,14 @@ return array(
     'templater' => array(
         'Templater',
         WEB_ROOT . '/templates/',
-        APP_ROOT . '/tmp/',
         'globals' => array(
             'site_url' => '',
             'static_url' => '/static',
         ),
+        '#tplcacher' => '',
     ),
+    'redis' => array('RedisCacher', array('127.0.0.1', 6379), 'dat.'),
+    'tplcacher' => array('FileCacher', array(APP_ROOT . '/tmp/', '.html', 0666), 'tpl.'),
     'pdo' => array(
         'default' => array(
             'class' => 'PDO',

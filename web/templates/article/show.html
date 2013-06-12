@@ -1,6 +1,6 @@
 <?php 
-$this->extend_tpl('public/base.html'); 
-$this->block_start('content');
+$this->extendTpl('public/base.html'); 
+$this->blockStart('content');
 ?>
            
 <article id="post-<?php echo $article->ID ?>" class="post-<?php echo $article->ID ?> post type-post status-publish format-standard hentry category-software">
@@ -44,6 +44,6 @@ $this->block_start('content');
 </nav><!-- .nav-single -->
 
 <?php
-$this->include_tpl('public/post_comment.html');
-$this->block_end();
+$this->includeTpl('public/post_comment.html');
+$this->blockEnd();
 ?>

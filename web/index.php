@@ -27,18 +27,22 @@ route('/article/<int>/', 'article_show', null, array('GET'));
 /*博客配置项*/
 function get_options()
 {
-    $db = app()->db;
-    $options = $db->doSelect(
-        'wp_options', 'WHERE option_name in (?, ?, ?, ?)',
-        array('siteurl', 'blogname', 'blogdescription', 'posts_per_page'),
-        'option_name, option_value',
-        PDO::FETCH_COLUMN | PDO::FETCH_GROUP | PDO::FETCH_UNIQUE
-    );
-    return array(
-        'site_title' => $options['blogname'],
-        'site_description' => $options['blogdescription'],
-        'posts_per_page' => intval($options['posts_per_page']),
-    );
+    $data = app()->redis->get('options');
+    if (empty($data)) {
+        $options = app()->db->doSelect(
+            'wp_options', 'WHERE option_name in (?, ?, ?, ?)',
+            array('siteurl', 'blogname', 'blogdescription', 'posts_per_page'),
+            'option_name, option_value',
+            PDO::FETCH_COLUMN | PDO::FETCH_GROUP | PDO::FETCH_UNIQUE
+        );
+        $data = array(
+            'site_title' => $options['blogname'],
+            'site_description' => $options['blogdescription'],
+            'posts_per_page' => intval($options['posts_per_page']),
+        );
+        app()->redis->set('options', $data, 600);
+    }
+    return $data;
 }
 
 
@@ -56,13 +60,13 @@ function get_sidebar()
     $coll = new Collection($db, 'comments', 'Comment');
     $sidebar['recent_comments'] = $coll->with(new CommentListener())->load(array('comment_type'=>''), 'ORDER BY comment_date DESC LIMIT 5');
     /*文章归档*/
-    $coll = new Collection($db, 'posts');
+    $coll = new Collection($db, 'posts', 'Article');
     $sidebar['archives'] = $coll->load($article_conds, 'GROUP BY YEAR(post_date), MONTH(post_date) DESC LIMIT 5');
     /*文章分类*/
     $coll = new Collection($db, 'term_taxonomy', 'TermTaxonomy');
-    $sidebar['categories'] = $app->categories->load();
+    $sidebar['categories'] = $app->categories->load(array(), ' AND `count`>0');
     return $sidebar;
 }
 
-$app->templater->globals = array_merge($app->templater->globals, get_options(), get_sidebar());
+$app->templater->globals = array_merge($app->templater->globals, get_options());
 run($app);
