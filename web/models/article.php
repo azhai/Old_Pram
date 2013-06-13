@@ -69,7 +69,7 @@ final class Article extends Model
         $article_id = $this->id;
         $subquery = "SELECT term_taxonomy_id FROM `wp_term_relationships`"
                   . " WHERE object_id='$article_id'";
-        $taxonomies = $app->taxonomies->with(new TermListener())->load(
+        $taxonomies = $app->taxonomies->with(new TaxonomyListener())->load(
             array(), "WHERE term_taxonomy_id IN ($subquery)"
         );
         $categories = array();
@@ -140,7 +140,7 @@ class ArticleListener extends Listener
                     'object_id', 'term_taxonomy_id'
                 );
                 $taxonomy_ids = array_reduce($relations, 'array_merge', array());
-                $taxonomies = $app->taxonomies->with(new TermListener())->load(
+                $taxonomies = $app->taxonomies->with(new TaxonomyListener())->load(
                     array('term_taxonomy_id'=>$taxonomy_ids)
                 );
             }

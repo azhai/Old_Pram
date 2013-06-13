@@ -7,7 +7,7 @@ $this->blockStart('content');
     <header class="entry-header">
         <h1 class="entry-title"><?php echo $article->post_title ?></h1>
         <div class="comments-link">
-            <a href="/article/<?php echo $article->ID ?>/#respond" title="《<?php echo $article->post_title ?>》上的评论"><span class="leave-reply">发表回复</span></a>
+            <a href="<?php echo $site_url ?>/article/<?php echo $article->ID ?>/#respond" title="《<?php echo $article->post_title ?>》上的评论"><span class="leave-reply">发表回复</span></a>
         </div><!-- .comments-link -->
     </header><!-- .entry-header -->
 
@@ -18,22 +18,22 @@ $this->blockStart('content');
     </div><!-- .entry-content -->
         
     <footer class="entry-meta">
-        本条目发布于 <a href="<?php echo $site_url ?>?p=<?php echo $article->ID ?>" title="<?php echo $article->post_date->format('H:i') ?>" rel="bookmark"><time class="entry-date" datetime="<?php echo $article->post_date->format('Y-m-d\\TH:i:sP') ?>"><?php echo $article->post_date->format('Y-m-d') ?></time></a>。
+        本条目发布于 <a href="<?php echo $site_url ?>/archive/<?php echo $article->post_date->format('Ym') ?>/" title="<?php echo $article->post_date->format('H:i') ?>" rel="bookmark"><time class="entry-date" datetime="<?php echo $article->post_date->format('Y-m-d\\TH:i:sP') ?>"><?php echo $article->post_date->format('Y-m-d') ?></time></a>。
         属于
         <?php foreach ($article->categories as $i => $category) { ?>
         <?php if ($i > 0) echo '、' ?>
-        <a href="<?php echo $site_url ?>?cat=<?php echo $category->term_id ?>" title="查看 <?php echo $category->term->name ?> 中的全部文章" rel="category"><?php echo $category->term->name ?></a>
+        <a href="<?php echo $site_url ?>/category/<?php echo $category->term->slug ?>/" title="查看 <?php echo $category->term->name ?> 中的全部文章" rel="category"><?php echo $category->term->name ?></a>
         <?php } ?>
         分类
         <?php if ($article->tags) { ?>
             ，被贴了
             <?php foreach ($article->tags as $i => $tag) { ?>
             <?php if ($i > 0) echo '、' ?>
-            <a href="<?php echo $site_url ?>?tag=<?php echo $tag->term->slug ?>" rel="tag"><?php echo $tag->term->name ?></a>
+            <a href="<?php echo $site_url ?>/tag/<?php echo $tag->term->slug ?>/" rel="tag"><?php echo $tag->term->name ?></a>
             <?php } ?>
             标签
         <?php } ?>。
-        <span class="by-author">作者是 <span class="author vcard"><a class="url fn n" href="<?php echo $site_url ?>?author=<?php echo $article->post_author ?>" title="查看所有由 <?php echo $article->author->display_name ?> 发布的文章" rel="author"><?php echo $article->author->display_name ?></a></span>。</span>
+        <span class="by-author">作者是 <span class="author vcard"><a class="url fn n" href="<?php echo $site_url ?>/author/<?php echo $article->post_author ?>/" title="查看所有由 <?php echo $article->author->display_name ?> 发布的文章" rel="author"><?php echo $article->author->display_name ?></a></span>。</span>
     </footer><!-- .entry-meta -->
 </article><!-- #post -->
 

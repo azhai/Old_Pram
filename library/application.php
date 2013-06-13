@@ -20,17 +20,10 @@ defined('DEFAULT_TIMEZONE') or define('DEFAULT_TIMEZONE', 'Asia/Shanghai');
 function app($url=false)
 {
     static $app = null; //函数内缓存
-    if ($url === false) {
-        if (! is_null($app)) { //获取已初始化应用
-            return $app;
-        }
-        $url = $_SERVER['REQUEST_URI'];
+    if (is_null($app)) { //获取已初始化应用
+        $app = new Application();
+        spl_autoload_register(array($app, 'autoload'));
     }
-    $app = new Application(str_replace(WEB_URI, '', $url));
-    if ($error_log = $app->getSetting('error_log')) {
-        @error_log($error_log); //错误日志
-    }
-    spl_autoload_register(array($app, 'autoload'));
     return $app;
 }
 
@@ -40,7 +33,7 @@ function redirect($url, $code=301)
 {
     if ($code == 301) { //永久跳转
         if (true) { //TODO:网站内部跳转
-            return run(app($url));
+            return run(app(), $url);
         }
         @header('HTTP/1.1 301 Moved Permanently');
     }
@@ -56,9 +49,12 @@ function route($uri, $callback, $module=null, array $methods=null)
 
 
 /*运行*/
-function run(Application $app)
+function run(Application $app, $url=false)
 {
-    $response = $app->handleRouter();
+    if ($url === false) {
+        $url = $_SERVER['REQUEST_URI'];
+    }
+    $response = $app->handleRouter($url);
     if (is_null($response)) {
         echo $app->abort(500);
         return;
@@ -126,6 +122,7 @@ class Application
         'Observer' =>  'event.php',
         'Database' =>  'database.php',
         'Collection' => 'database.php',
+        'Model' => 'database.php',
         'SQLiteral' => 'database.php',
         'KLogger' =>  'logger.php',
         'KFileLogger' =>  'logger.php',
@@ -141,15 +138,13 @@ class Application
     protected $settings = array(); //配置
     protected $services = array(); //服务
     protected $envname = '';
-    public $current_url = false;
     public $request = null;
     public $response = null;
 
-    public function __construct($current_url)
+    public function __construct()
     {
-        $url_pics = parse_url($current_url);
-        if (is_array($url_pics)) {
-            $this->current_url = $url_pics['path'];
+        if ($error_log = $this->getSetting('error_log')) {
+            @error_log($error_log); //错误日志
         }
     }
 
@@ -167,7 +162,11 @@ class Application
             return true;
         }
         foreach ($this->search_pathes as $search_path) {
-            $php_file = rtrim($search_path, '/') . '/' . strtolower($class) . '.php';
+            $classes = array('Hanlder', 'Model', 'Collection', 'Listener');
+            if (! in_array($class, $classes)) {
+                $filename = str_replace($classes, array_fill(0, count($classes), ''), $class);
+            }
+            $php_file = rtrim($search_path, '/') . '/' . strtolower($filename) . '.php';
             if (file_exists($php_file)) {
                 require_once $php_file;
                 if (class_exists($class, false)) {
@@ -219,8 +218,8 @@ class Application
         $subname = empty($subname) ? $this->envname : $subname;
         $setting = $this->getSetting($name, $subname);
         if (is_callable($setting)) {
-            //return Procedure::exec($setting);
-            return $setting();
+            return Procedure::exec($setting);
+            //return $setting();
         }
         else if (is_array($setting)) {
             $call = new Procedure(array_shift($setting), '__construct');
@@ -250,15 +249,18 @@ class Application
     }
 
     /*找到URL对应函数或对象获得输出*/
-    public function handleRouter()
+    public function handleRouter($url)
     {
-        if ($this->current_url === false) {
-            return;
+        $current_url = '';
+        $url_pics = parse_url(str_replace(WEB_URI, '', $url));
+        if (is_array($url_pics)) {
+            $current_url = $url_pics['path'];
         }
         if (empty($this->response)) {
-            @list($handler, $args) = $this->router->find($this->current_url);
+            $route = $this->router->match($current_url);
+            $handler = Handler::initialize($route, $_SERVER['REQUEST_METHOD']);
             if (! is_null($handler)) {
-                $this->response = $handler->emit($_SERVER['REQUEST_METHOD'], $args);
+                $this->response = $handler->emit($this->router->route_args);
             }
         }
         return $this->response;
@@ -285,8 +287,13 @@ class HamRouter
         '<int>' => '([0-9\-]+)',
         '<float>' => '([0-9\.\-]+)',
         '<string>' => '([a-zA-Z0-9\-_]+)',
-        '<path>' => '([a-zA-Z0-9\-_\/])'
+        '<page>' => '([0-9]*)\/?([0-9]*)\/?',
+        '<path>' => '([a-zA-Z0-9\-_\/])',
     );
+    public $current_url = '';
+    public $url_format = '';
+    public $route_key = false;
+    public $route_args = array();
     protected $routes = array();
     protected $prefix = '';
 
@@ -294,47 +301,81 @@ class HamRouter
     {
         $module = is_null($module) ? strtok($uri, '/') : $module;
         $uri = str_replace('/', '\/', preg_quote(rtrim($uri, '/')));
+        $keys = array_map('preg_quote', array_keys(self::$route_types));
+        $values = array_values(self::$route_types);
+        $route_url = str_replace($keys, $values, $uri);
         if (empty($methods)) {
             $methods = array('GET', 'POST', 'HEAD');
         }
-        $this->compile($uri, $callback, $module, $methods);
+        $this->compile($route_url, $callback, $module, $methods);
     }
 
-    public function compile($uri, $callback, $module, array $methods=array())
+    public function compile($route_url, $callback, $module, array $methods=array())
     {
-        $keys = array_map('preg_quote', array_keys(self::$route_types));
-        $values = array_values(self::$route_types);
-        $route = str_replace($keys, $values, $uri);
         $wildcard = '';
         if ($callback instanceof self) {
-            $callback->prefix = $uri;
+            $route = $callback;
+            $route->prefix = $route_url;
             $wildcard = '(.*)?';
         }
-        else if ($callback instanceof Handler) {
-            $callback->module = $module;
-        }
         else {
-            $callback = Handler::create($callback, $methods);
-            $callback->module = $module;
+            $route = array(
+                'module' => $module,
+                'callback' => $callback,
+                'methods' => $methods,
+            );
         }
-        $route_key = '/^' . $route . '\/?' . $wildcard . '$/';
-        $this->routes[$route_key] = $callback;
+        $route_key = '/^' . $route_url . '\/?' . $wildcard . '$/';
+        $this->routes[$route_key] = $route;
         return $route_key;
     }
 
-    public function find($url)
+    public function match($url)
     {
-        foreach ($this->routes as $route_key => $handler) {
+        foreach ($this->routes as $route_key => $route) {
             if (preg_match($route_key, $url, $args)) {
-                if ($handler instanceof self) {
-                    $inner_url = substr($url, strlen($handler->prefix));
-                    return $handler->find($inner_url);
+                if ($route instanceof self) {
+                    $inner_url = substr($url, strlen($route->prefix));
+                    return $route->match($inner_url);
                 }
-                $args[0] = app(); //丢掉第一个元素，完整匹配的URL
-                return array($handler, $args);
+                array_shift($args); //丢掉第一个元素，完整匹配的URL
+                $this->current_url = $url;
+                $this->route_key = $route_key;
+                $this->route_args = $args;
+                return $route;
             }
         }
-        return array(null, array());
+    }
+    
+    public function getUrlFormat()
+    {
+        if (empty($this->url_format)) {
+            $url_format = preg_replace('/\([^\)]+\)/', '%s', $this->route_key);
+            $url_format = str_replace(
+                array('\/', '?', '^', '$'), 
+                array('/', '', '', ''), 
+                $url_format
+            );
+            $this->url_format = '/' . trim($url_format, '/') . '/';
+        }
+        return $this->url_format;
+    }
+    
+    public function urlForCurrent(array $args=null, $reverse=false)
+    {
+        if (empty($args)) {
+            return $this->current_url;
+        }
+        $url_format = $this->getUrlFormat();
+        $offset = 0;
+        $length = count($args);
+        if ($reverse === true) {
+            $offset = -$length;
+            $args = ($length > 1) ? array_reverse($args) : $args;
+        }
+        $route_args = $this->route_args;
+        array_splice($route_args, $offset, $length, $args);
+        return vsprintf($url_format, $route_args);
     }
 }
 
@@ -344,33 +385,57 @@ class HamRouter
  */
 class Handler
 {
+    public $app = null;
     public $module = '';
-    public $callbacks = array();
-
-    public static function create($callback, array $methods=array())
+    public $callback = '';
+    
+    public function __construct($module, $callback='')
     {
-        $obj = new self();
-        if (! empty($callback)) {
-            foreach ($methods as $method) {
-                $obj->callbacks[strtoupper($method)] = $callback;
-            }
+        $this->module = $module;
+        $this->callback = $callback;
+        $this->app = app();
+    }
+    
+    public static function initialize($route, $method='GET')
+    {
+        if (empty($route)) {
+            return app()->abort(404); //Page not found
+        }
+        $method = strtoupper($method);
+        if (is_array($route['methods']) && ! in_array($method, $route['methods'])) {
+            return app()->abort(405);  //Method not allowed
+        }
+        //加载View所在文件
+        $filename = WEB_ROOT . '/views/' . $route['module'] . '.php';
+        if (file_exists($filename)) {
+            require_once $filename;
+        }
+        $handler_name = $route['callback'];
+        if (is_subclass_of($handler_name, 'Handler', true)) { //php5.0.3+
+            $obj = new $handler_name($route['module'], $method);
+        }
+        else if (function_exists($handler_name)) {
+            $obj = new self($route['module'], $handler_name);
         }
         return $obj;
     }
-
-    public function emit($method='GET', array $args=array())
+    
+    public function prepare(array $args=array())
     {
-        if (method_exists($this, $method)) { //PHP方法名不区分大小写
-            $callback = array($this, $method);
+        return $args;
+    }
+
+    public function emit(array $args=array())
+    {
+        if (method_exists($this, $this->callback)) {
+            $callback = array($this, $this->callback);
+            $args = $this->prepare($args);
         }
-        else if (isset($this->callbacks[$method])) {
-            $callback = $this->callbacks[$method];
-            //加载当前模块中所有的handlers
-            if (is_string($callback) && ! function_exists($callback)) {
-                require_once WEB_ROOT . '/views/' . $this->module . '.php';
-            }
+        else if (is_callable($this->callback)) {
+            $callback = $this->callback;
+            array_unshift($args, $this->app);
         }
-        if (is_callable($callback)) {
+        if (isset($callback)) {
             return Procedure::exec($callback, $args);
         }
     }
@@ -394,7 +459,17 @@ class Templater
     {
         $this->template_dir = rtrim($template_dir, DS);
         $this->globals = $globals;
+        $this->globals['current_url'] = app()->router->current_url;
         $this->cacher = $cacher;
+    }
+    
+    public function urlFor($url, array $args=null, $reverse=false)
+    {
+        $router = app()->router;
+        if ($url === '' || $url === $router->current_url) {
+            return $router->urlForCurrent($args, $reverse);
+        }
+        return $url;
     }
 
     public function partial($template_file, array $context=array())

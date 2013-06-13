@@ -42,7 +42,7 @@ extract(get_sidebar());
     <h3 class="widget-title">分类目录</h3>        
     <ul>
         <?php foreach ($categories as $category) { ?>
-        <li class="cat-item cat-item-<?php echo $category->term_id ?>"><a href="<?php echo $site_url ?>/category/<?php echo $category->term_id ?>/" title="<?php echo $category->term->slug ?>"><?php echo $category->term->name ?></a>
+        <li class="cat-item cat-item-<?php echo $category->term_id ?>"><a href="<?php echo $site_url ?>/category/<?php echo $category->term->slug ?>/" title="<?php echo $category->term->slug ?>"><?php echo $category->term->name ?></a>
         <?php } ?>
     </li>
     </ul>

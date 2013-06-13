@@ -4,8 +4,8 @@ defined('APP_ROOT') or die();
 return array(
     'error_log' => APP_ROOT . '/logs/error.log',
     'search_pathes' => array(
-        WEB_ROOT . '/views',
         WEB_ROOT . '/models',
+        WEB_ROOT . '/views',
     ),
     'router' => 'HamRouter',
     'logger' => array('KFileLogger', false, APP_ROOT . '/logs/'),
@@ -71,13 +71,13 @@ return array(
         'class' => 'Collection',
         '#db' => '',
         'table' => 'term_taxonomy',
-        'model' => 'TermTaxonomy',
+        'model' => 'Taxonomy',
     ),
     'categories' => array(
         'class' => 'Collection',
         '#db' => '',
         'table' => 'term_taxonomy',
-        'model' => 'TermTaxonomy',
+        'model' => 'Taxonomy',
         'phrases' => array('taxonomy'=>'category'),
     ),
 );

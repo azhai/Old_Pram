@@ -6,9 +6,6 @@
  * @author Ryan Liu <azhai@126.com>
  */
 
-require_once WEB_ROOT . '/models/article.php';
-require_once WEB_ROOT . '/models/termtaxonomy.php';
-
 
 function article_show($app, $id)
 {
